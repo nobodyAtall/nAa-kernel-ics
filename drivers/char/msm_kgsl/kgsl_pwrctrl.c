@@ -46,9 +46,9 @@ void kgsl_pwrctrl_pwrlevel_change(struct kgsl_device *device,
 				clk_set_rate(pwr->ebi1_clk,
 					pwr->pwrlevels[pwr->active_pwrlevel].
 					bus_freq);
-//			pm_qos_update_request(PM_QOS_SYSTEM_BUS_FREQ,
-//				pwr->pwrlevels[pwr->active_pwrlevel].
-//				bus_freq);
+			pm_qos_update_requirement(PM_QOS_SYSTEM_BUS_FREQ,
+				"kgsl_3d", pwr->pwrlevels[pwr->active_pwrlevel].
+				bus_freq/1000);
 		}
 		KGSL_PWR_WARN(device, "kgsl pwr level changed to %d\n",
 					  pwr->active_pwrlevel);
@@ -355,17 +355,17 @@ void kgsl_pwrctrl_axi(struct kgsl_device *device, int state)
 				clk_set_rate(pwr->ebi1_clk, 0);
 				clk_disable(pwr->ebi1_clk);
 			}
-//			pm_qos_update_request(PM_QOS_SYSTEM_BUS_FREQ,
-//				PM_QOS_DEFAULT_VALUE);
+			pm_qos_update_requirement(PM_QOS_SYSTEM_BUS_FREQ,
+				"kgsl_3d", PM_QOS_DEFAULT_VALUE);
 		}
 	} else if (state == KGSL_PWRFLAGS_ON) {
 		if (!test_and_set_bit(KGSL_PWRFLAGS_AXI_ON,
 			&pwr->power_flags)) {
 			KGSL_PWR_INFO(device,
 				"axi on, device %d\n", device->id);
-//			pm_qos_update_request(PM_QOS_SYSTEM_BUS_FREQ,
-//				pwr->pwrlevels[pwr->active_pwrlevel].
-//				bus_freq);
+			pm_qos_update_requirement(PM_QOS_SYSTEM_BUS_FREQ,
+				"kgsl_3d", pwr->pwrlevels[pwr->active_pwrlevel].
+				bus_freq/1000);
 			if (pwr->ebi1_clk) {
 				clk_enable(pwr->ebi1_clk);
 				clk_set_rate(pwr->ebi1_clk,
@@ -515,8 +515,8 @@ int kgsl_pwrctrl_init(struct kgsl_device *device)
 					 pwr->pwrlevels[pwr->active_pwrlevel].
 						bus_freq);
 
-//	pm_qos_add_request(PM_QOS_SYSTEM_BUS_FREQ,
-//				PM_QOS_DEFAULT_VALUE);
+	pm_qos_add_requirement(PM_QOS_SYSTEM_BUS_FREQ, "kgsl_3d",
+				PM_QOS_DEFAULT_VALUE);
 
 	/*acquire interrupt */
 	pwr->interrupt_num =
@@ -560,7 +560,7 @@ void kgsl_pwrctrl_close(struct kgsl_device *device)
 
 	clk_put(pwr->ebi1_clk);
 
-//	pm_qos_remove_request(PM_QOS_SYSTEM_BUS_FREQ);
+	pm_qos_remove_requirement(PM_QOS_SYSTEM_BUS_FREQ, "kgsl_3d");
 
 	pwr->pcl = 0;
 
@@ -687,8 +687,8 @@ clk_off:
 	device->state = device->requested_state;
 	device->requested_state = KGSL_STATE_NONE;
 	wake_unlock(&device->idle_wakelock);
-//	pm_qos_update_request(PM_QOS_CPU_DMA_LATENCY,
-//				PM_QOS_DEFAULT_VALUE);
+	pm_qos_update_requirement(PM_QOS_CPU_DMA_LATENCY, "kgsl",
+				PM_QOS_DEFAULT_VALUE);
 	KGSL_PWR_WARN(device, "state -> NAP/SLEEP(%d), device %d\n",
 				  device->state, device->id);
 
@@ -721,8 +721,8 @@ void kgsl_pwrctrl_wake(struct kgsl_device *device)
 				jiffies + device->pwrctrl.interval_timeout);
 
 	wake_lock(&device->idle_wakelock);
-//	pm_qos_update_request(PM_QOS_CPU_DMA_LATENCY,
-//					GPU_SWFI_LATENCY);
+	pm_qos_update_requirement(PM_QOS_CPU_DMA_LATENCY, "kgsl",
+					GPU_SWFI_LATENCY);
 	KGSL_PWR_INFO(device, "wake return for device %d\n", device->id);
 }
 EXPORT_SYMBOL(kgsl_pwrctrl_wake);

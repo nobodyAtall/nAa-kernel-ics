@@ -190,7 +190,8 @@ kgsl_sharedmem_uninit_sysfs(void)
 int
 kgsl_sharedmem_init_sysfs(void)
 {
-	return kgsl_create_device_sysfs_files(&kgsl_driver.virtdev, drv_attr_list);
+	return kgsl_create_device_sysfs_files(&kgsl_driver.virtdev,
+		drv_attr_list);
 }
 
 #ifdef CONFIG_OUTER_CACHE

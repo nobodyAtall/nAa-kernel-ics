@@ -1,7 +1,7 @@
 /* drivers/video/msm/src/drv/mdp/mdp_ppp.c
  *
  * Copyright (C) 2007 Google Incorporated
- * Copyright (c) 2008-2009, Code Aurora Forum. All rights reserved.
+ * Copyright (c) 2008-2009, 2012 Code Aurora Forum. All rights reserved.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -33,6 +33,7 @@
 #include <asm/system.h>
 #include <asm/mach-types.h>
 #include <linux/semaphore.h>
+#include <linux/msm_kgsl.h>
 
 #include "mdp.h"
 #include "msm_fb.h"
@@ -51,6 +52,7 @@ static uint32_t bytes_per_pixel[] = {
 	[MDP_RGBX_8888] = 4,
 	[MDP_Y_CBCR_H2V1] = 1,
 	[MDP_Y_CBCR_H2V2] = 1,
+	[MDP_Y_CBCR_H2V2_ADRENO] = 1,
 	[MDP_Y_CRCB_H2V1] = 1,
 	[MDP_Y_CRCB_H2V2] = 1,
 	[MDP_YCRYCB_H2V1] = 2,
@@ -530,14 +532,16 @@ static void mdp_ppp_setbg(MDPIBUF *iBuf)
 
 #define IS_PSEUDOPLNR(img) ((img == MDP_Y_CRCB_H2V2) | \
 				(img == MDP_Y_CBCR_H2V2) | \
+				(img == MDP_Y_CBCR_H2V2_ADRENO) | \
 				(img == MDP_Y_CRCB_H2V1) | \
 				(img == MDP_Y_CBCR_H2V1))
 
 #define IMG_LEN(rect_h, w, rect_w, bpp) (((rect_h) * w) * bpp)
 
 #define Y_TO_CRCB_RATIO(format) \
-	((format == MDP_Y_CBCR_H2V2 || format == MDP_Y_CRCB_H2V2) ?  2 :\
-	(format == MDP_Y_CBCR_H2V1 || format == MDP_Y_CRCB_H2V1) ?  1 : 1)
+	((format == MDP_Y_CBCR_H2V2 || format == MDP_Y_CBCR_H2V2_ADRENO || \
+	  format == MDP_Y_CRCB_H2V2) ?  2 : (format == MDP_Y_CBCR_H2V1 || \
+	  format == MDP_Y_CRCB_H2V1) ?  1 : 1)
 
 #ifdef CONFIG_ANDROID_PMEM
 static void get_len(struct mdp_img *img, struct mdp_rect *rect, uint32_t bpp,
@@ -553,25 +557,21 @@ static void get_len(struct mdp_img *img, struct mdp_rect *rect, uint32_t bpp,
 static void flush_imgs(struct mdp_blit_req *req, int src_bpp, int dst_bpp,
 			struct file *p_src_file, struct file *p_dst_file)
 {
-	uint32_t src0_len, src1_len, dst0_len, dst1_len;
+	uint32_t src0_len, src1_len;
 
-	/* flush src images to memory before dma to mdp */
-	get_len(&req->src, &req->src_rect, src_bpp,
-	&src0_len, &src1_len);
+	if (!(req->flags & MDP_BLIT_NON_CACHED)) {
+		/* flush src images to memory before dma to mdp */
+		get_len(&req->src, &req->src_rect, src_bpp,
+		&src0_len, &src1_len);
 
-	flush_pmem_file(p_src_file,
-	req->src.offset, src0_len);
-
-	if (IS_PSEUDOPLNR(req->src.format))
 		flush_pmem_file(p_src_file,
-			req->src.offset + src0_len, src1_len);
+		req->src.offset, src0_len);
 
-	get_len(&req->dst, &req->dst_rect, dst_bpp, &dst0_len, &dst1_len);
-	flush_pmem_file(p_dst_file, req->dst.offset, dst0_len);
+		if (IS_PSEUDOPLNR(req->src.format))
+			flush_pmem_file(p_src_file,
+				req->src.offset + src0_len, src1_len);
+	}
 
-	if (IS_PSEUDOPLNR(req->dst.format))
-		flush_pmem_file(p_dst_file,
-			req->dst.offset + dst0_len, dst1_len);
 }
 #else
 static void flush_imgs(struct mdp_blit_req *req, int src_bpp, int dst_bpp,
@@ -588,6 +588,7 @@ struct mdp_blit_req *req, struct file *p_src_file, struct file *p_dst_file)
 	uint32 src_width;
 	uint32 src_height;
 	uint32 src0_ystride;
+	uint32 src0_y1stride;
 	uint32 dst_roi_width;
 	uint32 dst_roi_height;
 	uint32 ppp_src_cfg_reg, ppp_operation_reg, ppp_dst_cfg_reg;
@@ -867,6 +868,7 @@ struct mdp_blit_req *req, struct file *p_src_file, struct file *p_dst_file)
 		break;
 
 	case MDP_Y_CBCR_H2V2:
+	case MDP_Y_CBCR_H2V2_ADRENO:
 	case MDP_Y_CRCB_H2V2:
 		inpBpp = 1;
 		src1 = (uint8 *) iBuf->mdpImg.cbcr_addr;
@@ -1058,7 +1060,16 @@ struct mdp_blit_req *req, struct file *p_src_file, struct file *p_dst_file)
 		}
 	}
 
-	src0_ystride = src_width * inpBpp;
+	if (iBuf->mdpImg.imgType == MDP_Y_CBCR_H2V2_ADRENO)
+		src0_ystride = ALIGN(src_width, 32) * inpBpp;
+	else
+		src0_ystride = src_width * inpBpp;
+
+	if (iBuf->mdpImg.imgType == MDP_Y_CBCR_H2V2_ADRENO)
+		src0_y1stride = 2 * ALIGN(src_width/2, 32);
+	else
+		src0_y1stride = src0_ystride;
+
 	dest0_ystride = iBuf->ibuf_width * iBuf->bpp;
 
 	/* no need to care about rotation since it's the real-XY. */
@@ -1120,7 +1131,7 @@ struct mdp_blit_req *req, struct file *p_src_file, struct file *p_dst_file)
 	MDP_OUTP(MDP_CMD_DEBUG_ACCESS_BASE + 0x010c, src0); /* comp.plane 0 */
 	MDP_OUTP(MDP_CMD_DEBUG_ACCESS_BASE + 0x0110, src1); /* comp.plane 1 */
 	MDP_OUTP(MDP_CMD_DEBUG_ACCESS_BASE + 0x011c,
-		 (src0_ystride << 16 | src0_ystride));
+		 (src0_y1stride << 16 | src0_ystride));
 
 	/* setup for rgb 565 */
 	MDP_OUTP(MDP_CMD_DEBUG_ACCESS_BASE + 0x0124, ppp_src_cfg_reg);
@@ -1161,27 +1172,42 @@ static int mdp_ppp_verify_req(struct mdp_blit_req *req)
 {
 	u32 src_width, src_height, dst_width, dst_height;
 
-	if (req == NULL)
+	if (req == NULL) {
+		printk(KERN_ERR "\n%s(): Error in Line %u", __func__,
+			__LINE__);
 		return -1;
+	}
 
 	if (MDP_IS_IMGTYPE_BAD(req->src.format) ||
-	    MDP_IS_IMGTYPE_BAD(req->dst.format))
+	    MDP_IS_IMGTYPE_BAD(req->dst.format)) {
+		printk(KERN_ERR "\n%s(): Error in Line %u", __func__,
+			__LINE__);
 		return -1;
+	}
 
 	if ((req->src.width == 0) || (req->src.height == 0) ||
 	    (req->src_rect.w == 0) || (req->src_rect.h == 0) ||
 	    (req->dst.width == 0) || (req->dst.height == 0) ||
-	    (req->dst_rect.w == 0) || (req->dst_rect.h == 0))
+	    (req->dst_rect.w == 0) || (req->dst_rect.h == 0)) {
+		printk(KERN_ERR "\n%s(): Error in Line %u", __func__,
+			__LINE__);
 
 		return -1;
+	}
 
 	if (((req->src_rect.x + req->src_rect.w) > req->src.width) ||
-	    ((req->src_rect.y + req->src_rect.h) > req->src.height))
+	    ((req->src_rect.y + req->src_rect.h) > req->src.height)) {
+		printk(KERN_ERR "\n%s(): Error in Line %u", __func__,
+			__LINE__);
 		return -1;
+	}
 
 	if (((req->dst_rect.x + req->dst_rect.w) > req->dst.width) ||
-	    ((req->dst_rect.y + req->dst_rect.h) > req->dst.height))
+	    ((req->dst_rect.y + req->dst_rect.h) > req->dst.height)) {
+		printk(KERN_ERR "\n%s(): Error in Line %u", __func__,
+			__LINE__);
 		return -1;
+	}
 
 	/*
 	 * scaling range check
@@ -1220,16 +1246,30 @@ static int mdp_ppp_verify_req(struct mdp_blit_req *req)
 	if (((MDP_SCALE_Q_FACTOR * dst_width) / src_width >
 	     MDP_MAX_X_SCALE_FACTOR)
 	    || ((MDP_SCALE_Q_FACTOR * dst_width) / src_width <
-		MDP_MIN_X_SCALE_FACTOR))
+		MDP_MIN_X_SCALE_FACTOR)) {
+		printk(KERN_ERR "\n%s(): Error in Line %u", __func__,
+			__LINE__);
 		return -1;
+	}
 
 	if (((MDP_SCALE_Q_FACTOR * dst_height) / src_height >
 	     MDP_MAX_Y_SCALE_FACTOR)
 	    || ((MDP_SCALE_Q_FACTOR * dst_height) / src_height <
-		MDP_MIN_Y_SCALE_FACTOR))
+		MDP_MIN_Y_SCALE_FACTOR)) {
+		printk(KERN_ERR "\n%s(): Error in Line %u", __func__,
+			__LINE__);
 		return -1;
-
+	}
 	return 0;
+}
+
+int get_gem_img(struct mdp_img *img, unsigned long *start, unsigned long *len)
+{
+	/* Set len to zero to appropriately error out if
+	   kgsl_gem_obj_addr fails */
+
+	*len = 0;
+	return kgsl_gem_obj_addr(img->memory_id, (int) img->priv, start, len);
 }
 
 int get_img(struct mdp_img *img, struct fb_info *info, unsigned long *start,
@@ -1284,13 +1324,19 @@ int mdp_ppp_blit(struct fb_info *info, struct mdp_blit_req *req)
 		req->dst.format =  mfd->fb_imgType;
 	if (req->src.format == MDP_FB_FORMAT)
 		req->src.format = mfd->fb_imgType;
-	get_img(&req->src, info, &src_start, &src_len, &p_src_file);
+	if (req->flags & MDP_BLIT_SRC_GEM)
+		get_gem_img(&req->src, &src_start, &src_len);
+	else
+		get_img(&req->src, info, &src_start, &src_len, &p_src_file);
 	if (src_len == 0) {
 		printk(KERN_ERR "mdp_ppp: could not retrieve image from "
 		       "memory\n");
 		return -1;
 	}
-	get_img(&req->dst, info, &dst_start, &dst_len, &p_dst_file);
+	if (req->flags & MDP_BLIT_DST_GEM)
+		get_gem_img(&req->dst, &dst_start, &dst_len);
+	else
+		get_img(&req->dst, info, &dst_start, &dst_len, &p_dst_file);
 	if (dst_len == 0) {
 		put_img(p_src_file);
 		printk(KERN_ERR "mdp_ppp: could not retrieve image from "
@@ -1326,9 +1372,16 @@ int mdp_ppp_blit(struct fb_info *info, struct mdp_blit_req *req)
 	iBuf.mdpImg.imgType = req->src.format;
 
 	iBuf.mdpImg.bmy_addr = (uint32 *) (src_start + req->src.offset);
-	iBuf.mdpImg.cbcr_addr =
-	    (uint32 *) ((uint32) iBuf.mdpImg.bmy_addr +
-			req->src.width * req->src.height);
+
+	if (iBuf.mdpImg.imgType == MDP_Y_CBCR_H2V2_ADRENO)
+		iBuf.mdpImg.cbcr_addr =
+			(uint32 *) ((uint32) iBuf.mdpImg.bmy_addr +
+				ALIGN((ALIGN(req->src.width, 32) *
+				ALIGN(req->src.height, 32)), 4096));
+	else
+		iBuf.mdpImg.cbcr_addr =
+			(uint32 *) ((uint32) iBuf.mdpImg.bmy_addr +
+				req->src.width * req->src.height);
 
 	iBuf.mdpImg.mdpOp = MDPOP_NOP;
 

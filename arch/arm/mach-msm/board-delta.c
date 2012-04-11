@@ -113,7 +113,8 @@
 #ifdef CONFIG_SEMC_GPIO_EXTR
 #include  <linux/semc/semc_gpio_extr.h>
 #endif
-#define MSM_PMEM_MDP_SIZE	0x8DE000 //9297920 bytes
+//#define MSM_PMEM_MDP_SIZE	0x8DE000 //9297920 bytes
+#define MSM_PMEM_MDP_SIZE	0xC3D000 //9297920 + 3534848 (camera) = 12832768 bytes
 //#define MSM_PMEM_MDP_SIZE 	0xC74000 //13058048 bytes
 //#define MSM_PMEM_MDP_SIZE 	0xF74000 //16203776 bytes
 //#define MSM_PMEM_MDP_SIZE		0x1313000 //20000768 bytes

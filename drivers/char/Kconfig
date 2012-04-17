@@ -1118,8 +1118,6 @@ config DCC_TTY
 	tristate "DCC tty driver"
 	depends on ARM
 
-source "drivers/char/msm_kgsl/Kconfig"
-
 source "drivers/s390/char/Kconfig"
 
 config MSM_ROTATOR

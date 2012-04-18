@@ -797,3 +797,4 @@ static void destroy_channel(void)
 		chan = NULL;
 	}
 }
+

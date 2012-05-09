@@ -62,6 +62,10 @@ struct adreno_ringbuffer {
 	uint32_t timestamp;
 };
 
+#define writel_relaxed(v, c) ((void)__raw_writel((__force u32) \
+				cpu_to_le32(v), __mem_pci(c)))
+
+
 #define GSL_RB_WRITE(ring, gpuaddr, data) \
 	do { \
 		*ring = data; \

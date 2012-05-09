@@ -180,8 +180,7 @@ extern void _memset_io(volatile void __iomem *, int, size_t);
 #define readb_relaxed(addr) readb(addr)
 #define readw_relaxed(addr) readw(addr)
 #define readl_relaxed(addr) readl(addr)
-#define writel_relaxed(v,c)	((void)__raw_writel((__force u32) \
-					cpu_to_le32(v),__mem_pci(c)))
+
 #define readsb(p,d,l)		__raw_readsb(__mem_pci(p),d,l)
 #define readsw(p,d,l)		__raw_readsw(__mem_pci(p),d,l)
 #define readsl(p,d,l)		__raw_readsl(__mem_pci(p),d,l)

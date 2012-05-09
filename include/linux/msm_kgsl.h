@@ -1,31 +1,3 @@
-/* Copyright (c) 2002,2007-2010, Code Aurora Forum. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are
- * met:
- *     * Redistributions of source code must retain the above copyright
- *       notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary form must reproduce the above
- *       copyright notice, this list of conditions and the following
- *       disclaimer in the documentation and/or other materials provided
- *       with the distribution.
- *     * Neither the name of Code Aurora Forum, Inc. nor the names of its
- *       contributors may be used to endorse or promote products derived
- *       from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
- * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- */
 #ifndef _MSM_KGSL_H
 #define _MSM_KGSL_H
 
@@ -56,14 +28,14 @@
 #define KGSL_MAX_PWRLEVELS 5
 
 #define KGSL_CONVERT_TO_MBPS(val) \
-  (val*1000*1000U)
+	(val*1000*1000U)
 
 /* device id */
 enum kgsl_deviceid {
-	KGSL_DEVICE_3D0	= 0x00000000,
-	KGSL_DEVICE_2D0	= 0x00000001,
-	KGSL_DEVICE_2D1	= 0x00000002,
-	KGSL_DEVICE_MAX	= 0x00000003
+	KGSL_DEVICE_3D0		= 0x00000000,
+	KGSL_DEVICE_2D0		= 0x00000001,
+	KGSL_DEVICE_2D1		= 0x00000002,
+	KGSL_DEVICE_MAX		= 0x00000003
 };
 
 enum kgsl_user_mem_type {
@@ -81,7 +53,6 @@ struct kgsl_devinfo {
 	unsigned int chip_id;
 	unsigned int mmu_enabled;
 	unsigned int gmem_gpubaseaddr;
-
 	/*
 	* This field contains the adreno revision
 	* number 200, 205, 220, etc...
@@ -136,28 +107,27 @@ struct kgsl_shadowprop {
 	unsigned int flags; /* contains KGSL_FLAGS_ values */
 };
 
-
-
 struct kgsl_pwrlevel {
-  unsigned int gpu_freq;
-  unsigned int bus_freq;
+	unsigned int gpu_freq;
+	unsigned int bus_freq;
+	unsigned int io_fraction;
 };
 
 struct kgsl_version {
-  unsigned int drv_major;
-  unsigned int drv_minor;
-  unsigned int dev_major;
-  unsigned int dev_minor;
+	unsigned int drv_major;
+	unsigned int drv_minor;
+	unsigned int dev_major;
+	unsigned int dev_minor;
 };
 
 #ifdef __KERNEL__
 
-#define KGSL_3D0_REG_MEMORY  "kgsl_3d0_reg_memory"
-#define KGSL_3D0_IRQ    "kgsl_3d0_irq"
-#define KGSL_2D0_REG_MEMORY  "kgsl_2d0_reg_memory"
-#define KGSL_2D0_IRQ    "kgsl_2d0_irq"
-#define KGSL_2D1_REG_MEMORY  "kgsl_2d1_reg_memory"
-#define KGSL_2D1_IRQ    "kgsl_2d1_irq"
+#define KGSL_3D0_REG_MEMORY	"kgsl_3d0_reg_memory"
+#define KGSL_3D0_IRQ		"kgsl_3d0_irq"
+#define KGSL_2D0_REG_MEMORY	"kgsl_2d0_reg_memory"
+#define KGSL_2D0_IRQ		"kgsl_2d0_irq"
+#define KGSL_2D1_REG_MEMORY	"kgsl_2d1_reg_memory"
+#define KGSL_2D1_IRQ		"kgsl_2d1_irq"
 
 struct kgsl_grp_clk_name {
 	const char *clk;
@@ -293,11 +263,11 @@ struct kgsl_cmdstream_freememontimestamp {
 #define IOCTL_KGSL_CMDSTREAM_FREEMEMONTIMESTAMP \
 	_IOW(KGSL_IOC_TYPE, 0x12, struct kgsl_cmdstream_freememontimestamp)
 
-	/* Previous versions of this header had incorrectly defined
-	   IOCTL_KGSL_CMDSTREAM_FREEMEMONTIMESTAMP as a read-only ioctl instead
-	   of a write only ioctl.  To ensure binary compatability, the following
-	   #define will be used to intercept the incorrect ioctl
-	*/
+/* Previous versions of this header had incorrectly defined
+   IOCTL_KGSL_CMDSTREAM_FREEMEMONTIMESTAMP as a read-only ioctl instead
+   of a write only ioctl.  To ensure binary compatability, the following
+   #define will be used to intercept the incorrect ioctl
+*/
 
 #define IOCTL_KGSL_CMDSTREAM_FREEMEMONTIMESTAMP_OLD \
 	_IOR(KGSL_IOC_TYPE, 0x12, struct kgsl_cmdstream_freememontimestamp)
@@ -438,7 +408,6 @@ struct kgsl_cmdwindow_write {
 #define IOCTL_KGSL_CMDWINDOW_WRITE \
 	_IOW(KGSL_IOC_TYPE, 0x2e, struct kgsl_cmdwindow_write)
 
-
 struct kgsl_gpumem_alloc {
 	unsigned long gpuaddr;
 	size_t size;
@@ -458,9 +427,9 @@ struct kgsl_cff_syncmem {
 	_IOW(KGSL_IOC_TYPE, 0x30, struct kgsl_cff_syncmem)
 
 /*
-* A timestamp event allows the user space to register an action following an
-* expired timestamp.
-*/
+ * A timestamp event allows the user space to register an action following an
+ * expired timestamp.
+ */
 
 struct kgsl_timestamp_event {
 	int type;                /* Type of event (see list below) */

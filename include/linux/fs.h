@@ -1200,6 +1200,11 @@ struct super_block {
 	char *s_options;
 
 	/*
+	 * Saved pool identifier for cleancache (-1 means none)
+	 */
+	int cleancache_poolid;
+
+	/*
 	 * storage for asynchronous operations
 	 */
 	struct list_head s_async_list;

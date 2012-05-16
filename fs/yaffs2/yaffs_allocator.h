@@ -1,7 +1,7 @@
 /*
  * YAFFS: Yet another Flash File System . A NAND-flash specific file system.
  *
- * Copyright (C) 2002-2007 Aleph One Ltd.
+ * Copyright (C) 2002-2011 Aleph One Ltd.
  *   for Toby Churchill Ltd and Brightstar Engineering
  *
  * Created by Charles Manning <charles@aleph1.co.uk>
@@ -13,12 +13,18 @@
  * Note: Only YAFFS headers are LGPL, YAFFS C code is covered by GPL.
  */
 
-
-#ifndef __YAFFS_TAGS_VALIDITY_H__
-#define __YAFFS_TAGS_VALIDITY_H__
+#ifndef __YAFFS_ALLOCATOR_H__
+#define __YAFFS_ALLOCATOR_H__
 
 #include "yaffs_guts.h"
 
-void yaffs_InitialiseTags(yaffs_ExtendedTags *tags);
-int yaffs_ValidateTags(yaffs_ExtendedTags *tags);
+void yaffs_init_raw_tnodes_and_objs(struct yaffs_dev *dev);
+void yaffs_deinit_raw_tnodes_and_objs(struct yaffs_dev *dev);
+
+struct yaffs_tnode *yaffs_alloc_raw_tnode(struct yaffs_dev *dev);
+void yaffs_free_raw_tnode(struct yaffs_dev *dev, struct yaffs_tnode *tn);
+
+struct yaffs_obj *yaffs_alloc_raw_obj(struct yaffs_dev *dev);
+void yaffs_free_raw_obj(struct yaffs_dev *dev, struct yaffs_obj *obj);
+
 #endif

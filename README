@@ -1,8 +1,11 @@
-	nAa-kernel is based on the SEMC 2.1.A.0.435 sources
+	nAa-kernel-ics is the ICS kernel for msm7x27 devices
+
+This kernel is forked from the official SEMC 2.1.A.0.435 (eclair) sources
+
 Related links:
-http://forum.xda-developers.com/showthread.php?t=1256739
-http://forum.xda-developers.com/showthread.php?t=1350484
-http://forum.xda-developers.com/showthread.php?t=1415012
+shakira:http://forum.xda-developers.com/showthread.php?t=1576002
+robyn:	http://forum.xda-developers.com/showthread.php?t=1630023
+mimmi:	http://forum.xda-developers.com/showthread.php?t=1636504
 
 	Linux kernel release 2.6.xx <http://kernel.org/>
 

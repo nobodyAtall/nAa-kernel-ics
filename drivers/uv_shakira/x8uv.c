@@ -17,7 +17,7 @@
 #define DXDBG(x)					
 
 #define DEVICE_NAME				"X8"
-#define OFS_KALLSYMS_LOOKUP_NAME 0xc00aee98
+#define OFS_KALLSYMS_LOOKUP_NAME 0xc00aee94
 
 // struct definition
 struct clkctl_acpu_speed_dx {

@@ -4,8 +4,12 @@
 # create a compressed vmlinuz image from the original vmlinux
 #
 
+AFLAGS_head.o := -Wa,-march=armv6k
 HEAD	= head.o
-OBJS	= misc.o
+AFLAGS_misc.o +=-Wa,-march=armv6k
+MISC = misc.o
+AFLAGS_piggy.o +=-Wa,-march=armv6k
+PIGGY = piggy.o
 FONTC	= $(srctree)/drivers/video/console/font_acorn_8x8.c
 
 #
@@ -91,7 +95,7 @@ LDFLAGS_vmlinux += -p --no-undefined -X \
 # would otherwise mess up our GOT table
 CFLAGS_misc.o := -Dstatic=
 
-$(obj)/vmlinux: $(obj)/vmlinux.lds $(obj)/$(HEAD) $(obj)/piggy.o \
+$(obj)/vmlinux: $(obj)/vmlinux.lds $(obj)/$(HEAD) $(obj)/$(MISC) $(obj)/$(PIGGY) \
 	 	$(addprefix $(obj)/, $(OBJS)) FORCE
 	$(call if_changed,ld)
 	@:
@@ -99,6 +103,7 @@ $(obj)/vmlinux: $(obj)/vmlinux.lds $(obj)/$(HEAD) $(obj)/piggy.o \
 $(obj)/piggy.gz: $(obj)/../Image FORCE
 	$(call if_changed,gzip)
 
+AFLAGS_piggy.$(suffix_y).o += -Wa,-march=armv6k
 $(obj)/piggy.o:  $(obj)/piggy.gz FORCE
 
 CFLAGS_font.o := -Dstatic=

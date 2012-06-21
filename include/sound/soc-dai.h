@@ -221,7 +221,6 @@ struct snd_soc_dai {
 
 	/* parent codec/platform */
 	union {
-		struct snd_soc_codec *codec;
 		struct snd_soc_platform *platform;
 	};
 
